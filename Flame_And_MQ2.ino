@@ -1,0 +1,97 @@
+#include <Arduino.h>
+#if defined(ESP32)
+  #include <WiFi.h>
+#elif defined(ESP8266)
+  #include <ESP8266WiFi.h>
+#endif
+#include <Firebase_ESP_Client.h>
+
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+//Provide the RTDB payload printing info and other helper functions.
+#include "addons/RTDBHelper.h"
+
+// Insert your network credentials
+#define WIFI_SSID "Hi Guys"
+#define WIFI_PASSWORD "idontknow"
+
+// Insert Firebase project API Key
+#define API_KEY "AIzaSyD8Vetc-Euy05Bi2gv8lBB7ywgPHyJmQI0"
+
+// Insert RTDB URLefine the RTDB URL */
+#define DATABASE_URL "https://flame-and-mq2-sensor-56c06-default-rtdb.firebaseio.com" 
+
+//Define Firebase Data object
+FirebaseData fbdo;
+
+FirebaseAuth auth;
+FirebaseConfig config;
+
+unsigned long sendDataPrevMillis = 0;
+bool signupOK = false;
+int fsensor=D0;
+int mq3sensor=A0;
+int sensorvalue;
+String firestatus="";
+void setup(){
+  Serial.begin(115200);
+  pinMode(fsensor, INPUT);//define F_Sensor input pin
+  pinMode(mq3sensor, INPUT);//MQ3 sensor
+
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED){
+    Serial.print(".");
+    delay(300);
+  }
+  Serial.println();
+  Serial.print("Connected with IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.println();
+
+  /* Assign the api key (required) */
+  config.api_key = API_KEY;
+
+  /* Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
+
+  /* Sign up */
+  if (Firebase.signUp(&config, &auth, "", "")){
+    Serial.println("ok");
+    signupOK = true;
+  }
+  else{
+    Serial.printf("%s\n", config.signer.signupError.message.c_str());
+  }
+
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+}
+
+void loop(){
+  if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 5000 || sendDataPrevMillis == 0)){
+    sendDataPrevMillis = millis();
+    // Write an Int number on the database path test/int
+  int fire = digitalRead(fsensor);// read Flame sensor
+ 
+ if( fire == HIGH)
+  {
+    firestatus="No Fire Detected";
+    Firebase.RTDB.setString(&fbdo, "Flame sensor/Status", firestatus);
+    Serial.println("No fire detected");
+  }
+  else
+  {
+    firestatus="Fire Detected";
+    Firebase.RTDB.setString(&fbdo, "Flame sensor/Status", firestatus);
+
+    Serial.println("Fire Detected");
+  }
+   sensorvalue=analogRead(mq3sensor); /// read the MQ3 sensor
+   Serial.println(sensorvalue);
+    Firebase.RTDB.setFloat(&fbdo, "MQ3 Sensor/Value",sensorvalue);
+}
+}
