@@ -8,7 +8,16 @@ An IoT-enabled safety and monitoring system designed to detect fire flames and h
 * **Gas Leak Detection:** Continuous monitoring of combustible and hazardous gases via MQ-2 sensor.
 * **Dual Controller Support:**
   * **Arduino:** Handles local sensing, buzzer/LED alerts, and immediate actuators.
+    <p align="left">
+  <img src="Circuit_Diagrams/Arduino.JPG" alt="Arduino Circuit Preview" height="400" width="800">
+    </p>
+    
   * **NodeMCU (ESP8266):** Enables Wi-Fi connectivity for IoT alerts and monitoring.
+   
+  <p align="left">
+  <img src="Circuit_Diagrams/NodeMCU.JPG" alt="NodeMCU Circuit Preview" height="400" width="800">
+  </p>
+
 * **Documentation & Schematics:** Includes complete circuit diagrams and project reports for easy deployment.
 
 ---
